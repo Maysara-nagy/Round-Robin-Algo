@@ -50,17 +50,31 @@ def print_table(processes):
     table += " ---------------------------------------------------------------------------------------------------------------------\n"
     return table
 
+def generate_gantt_chart(processes, quantum):
+    gantt_chart = "\nGantt Chart:\n"
+    gantt_chart += "-" * 60 + "\n"
+    
+    timeline = []
+    current_time = 0
+    while any(process[2] > 0 for process in processes):
+        for process in processes:
+            if process[2] > 0:
+                time_slice = min(quantum, process[2])
+                timeline.append((process[0], current_time, current_time + time_slice))
+                current_time += time_slice
+                process[2] -= time_slice
+
+    for i in range(len(timeline)):
+        if i == 0 or timeline[i][0] != timeline[i - 1][0]:
+            gantt_chart += "|"
+        gantt_chart += " P{} {}-{} ".format(timeline[i][0], timeline[i][1], timeline[i][2])
+    gantt_chart += "|\n"
+    gantt_chart += "-" * 60 + "\n"
+    return gantt_chart
+
 def main():
     root = tk.Tk()
     root.title("Round Robin Scheduling")
-
-    n_entry = tk.Entry(root)
-    n_entry.pack()
-
-    quantum_entry = tk.Entry(root)
-    quantum_entry.pack()
-
-    processes = []
 
     def process_input():
         n = n_entry.get()
@@ -81,6 +95,9 @@ def main():
     def process_details(n, quantum):
         label = tk.Label(root, text="Enter process details:")
         label.pack()
+
+        global processes
+        processes = []
 
         for i in range(n):
             frame = tk.Frame(root)
@@ -120,6 +137,10 @@ def main():
         result_label = tk.Label(root, text=result_text)
         result_label.pack()
 
+        gantt_text = generate_gantt_chart(process_list, quantum)
+        gantt_label = tk.Label(root, text=gantt_text)
+        gantt_label.pack()
+
         avg_waiting_time = sum(process[5] for process in process_list) / len(process_list) if len(process_list) > 0 else 0
         avg_turnaround_time = sum(process[4] for process in process_list) / len(process_list) if len(process_list) > 0 else 0
         avg_response_time = sum(process[6] for process in process_list) / len(process_list) if len(process_list) > 0 else 0
@@ -128,11 +149,23 @@ def main():
             avg_waiting_time, avg_turnaround_time, avg_response_time))
         avg_label.pack()
 
+        tk.Button(root, text="Recalculate", command=lambda: recalculate(root)).pack()
+
+    def recalculate(root):
+        root.destroy()
+        main()
+
     n_label = tk.Label(root, text="Enter the Number of processes:")
     n_label.pack()
 
+    n_entry = tk.Entry(root)
+    n_entry.pack()
+
     quantum_label = tk.Label(root, text="Enter the Time Quantum:")
     quantum_label.pack()
+
+    quantum_entry = tk.Entry(root)
+    quantum_entry.pack()
 
     submit_button = tk.Button(root, text="Submit", command=process_input)
     submit_button.pack()
