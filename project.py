@@ -46,6 +46,27 @@ def print_table(processes):
             process[4], process[5], process[6]))
     print(" ---------------------------------------------------------------------------------------------------------------------")
 
+def generate_gantt_chart(processes, quantum):
+    print("\nGantt Chart:")
+    print("-" * 60)
+    
+    timeline = []
+    current_time = 0
+    while any(process[2] > 0 for process in processes):
+        for process in processes:
+            if process[2] > 0:
+                time_slice = min(quantum, process[2])
+                timeline.append((process[0], current_time, current_time + time_slice))
+                current_time += time_slice
+                process[2] -= time_slice
+
+    for i in range(len(timeline)):
+        if i == 0 or timeline[i][0] != timeline[i - 1][0]:
+            print("|", end="")
+        print(" P{} {}-{} ".format(timeline[i][0], timeline[i][1], timeline[i][2]), end="")
+    print("|")
+    print("-" * 60)
+
 def main():
     n = get_non_negative_integer_input("Enter the Number of processes: ")
     quantum = get_non_negative_integer_input("Enter the Time Quantum: ")
@@ -65,6 +86,7 @@ def main():
 
     print("\nRound Robin Scheduling Results:")
     print_table(processes)
+    generate_gantt_chart(processes, quantum)
 
     # Calculate and print averages
     avg_waiting_time = sum(process[5] for process in processes) / n if n > 0 else 0
